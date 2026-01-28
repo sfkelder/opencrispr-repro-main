@@ -19,7 +19,7 @@ class MacromoleculeBatch:
         metadata = self.metadata[key]
 
         if isinstance(key, slice):
-            return self.batch_class(X, C, S, metadata)
+            return self.batch_class(C, S, metadata)
         elif isinstance(key, int):
             unpaded_mask = C != 0
             C = C[unpaded_mask]
