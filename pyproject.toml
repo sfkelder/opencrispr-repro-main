@@ -15,7 +15,7 @@ dependencies = [
     "tqdm",
     "pandas",
     "pynvml",  # Needed for GPU monitoring
-    "pydantic"
+    "pydantic",
     "click"
 ]
 
