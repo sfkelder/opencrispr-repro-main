@@ -26,13 +26,13 @@ class SeqDataset(Dataset):
     def __getitem__(self, idx):
         d = dict(sequence=self.seqs[idx])
         if self.labels is not None:
-            d = dict(label=self.labels[idx])
+            d = dict(sequence=self.seqs[idx], label=self.labels[idx])
         return d
 
 
 def progen2_collate_fn(items: list[dict], tokenizer: PreTrainedTokenizerBase):
     seqs = ["1" + item["sequence"] + "2" for item in items]
-    seqs = [seq if np.random() < 0.5 else seq[::-1] for seq in seqs]
+    seqs = [seq if np.random.random() < 0.5 else seq[::-1] for seq in seqs]
     batch = tokenizer(seqs, return_tensors="pt", padding=True)
     return {
         "input_ids": batch["input_ids"],
@@ -43,7 +43,7 @@ def progen2_collate_fn(items: list[dict], tokenizer: PreTrainedTokenizerBase):
 
 def esm2_collate_fn(items: list[dict], tokenizer: PreTrainedTokenizerBase):
     seqs = [item["sequence"] for item in items]
-    seqs = [seq if np.random() < 0.5 else seq[::-1] for seq in seqs]
+    seqs = [seq if np.random.random() < 0.5 else seq[::-1] for seq in seqs]
     batch = tokenizer(seqs, return_tensors="pt", padding=True)
     return {
         "input_ids": batch["input_ids"],

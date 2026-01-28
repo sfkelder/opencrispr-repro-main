@@ -20,7 +20,7 @@ def get_trainer(config: FinetuneAPI):
     model = HuggingFaceModel(
         model=get_model(config.model),
         tokenizer=tokenizer,
-        eval_metrics=[LossMetric()],
+        eval_metrics= [] if config.model.name == "progen2" else [LossMetric()],
         shift_labels=config.model.name == "progen2",
     )
     logger.info("Initialized model")
@@ -95,7 +95,7 @@ def get_trainer(config: FinetuneAPI):
         algorithms=algorithms,
         step_schedulers_every_batch=True,
         # Save/load
-        autoresume=True,
+        autoresume=False,
         callbacks=[checkpointer],
         save_folder=config.save_folder,
         save_filename="ba{batch}-rank{rank}.pt",
