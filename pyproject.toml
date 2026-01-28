@@ -1,0 +1,34 @@
+[project]
+name = "opencrispr_repro"
+version = "0.1.0"
+description = "Reproduction of OpenCRISPR scripts"
+authors = [
+    { name = "Aadyot Bhatnagar", email = "abhatnagar@profluent.bio" }
+]
+license = "BSD-3-Clause"
+requires-python = ">=3.9"
+dependencies = [
+    "accelerate",
+    "torch",
+    "mosaicml>=0.26.0",
+    "transformers==4.49",
+    "tqdm",
+    "pandas",
+    "pynvml",  # Needed for GPU monitoring
+    "pydantic"
+    "click"
+]
+
+[pypi-options]
+index-url = "https://pypi.org/simple"
+extra-index-urls = ["https://download.pytorch.org/whl/cu124"]  # pin to cuda 12.4
+
+[project.optional-dependencies]
+test = ["pytest-xdist", "transformers"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/opencrispr_repro"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
