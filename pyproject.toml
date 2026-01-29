@@ -16,7 +16,8 @@ dependencies = [
     "pandas",
     "pynvml",  # Needed for GPU monitoring
     "pydantic",
-    "click"
+    "click",
+    "ruamel.yaml"
 ]
 
 [pypi-options]

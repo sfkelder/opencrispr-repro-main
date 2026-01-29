@@ -70,8 +70,17 @@ def main(model_path: str, config_path: str, job_idx: int):
         config = [config]
     for sub_config in config:
         n_gen, n_kept = 0, 0
+        
+        # Configurations
         num_samples = sub_config.pop("num_samples", 10000)
-        sub_config["num_samples"] = sub_config.pop("batch_size", 10)
+        batch_size = sub_config.pop("batch_size", 10)
+
+        sub_config["do_sample"] = True
+        sub_config["num_return_sequences"] = batch_size
+        sub_config["temperature"] = sub_config.setdefault("temperature", 1)
+        sub_config["top_p"] = sub_config.setdefault("top_p", 1)
+        sub_config["top_k"] = sub_config.setdefault("top_k", 0)
+
         ctx_dict = sub_config.pop("context")
         ctx_name = ctx_dict["name"]
         ctx = ctx_dict["seq"]
@@ -83,21 +92,46 @@ def main(model_path: str, config_path: str, job_idx: int):
         eos_id = tokenizer.encode(eos)[0]
 
         i = (all_gens.context == ctx).sum().item()
+        encoded = tokenizer(
+            ctx,
+            return_tensors="pt",
+            add_special_tokens=False,
+        )
+        input_ids = encoded["input_ids"].to(model.device)
+        attention_mask = encoded.get("attention_mask", torch.ones_like(input_ids)).to(model.device)
+
         with tqdm(total=num_samples, desc="Generations (0/0 removed)") as pbar:
             pbar.update(i)
             while i < num_samples:
-                gens = model.generate(context=ctx, max_length=MAX_LEN, eos_token_id=eos_id, **sub_config)
+                with torch.no_grad():
+                    output_ids = model.generate(
+                        input_ids=input_ids,
+                        max_length=MAX_LEN,
+                        eos_token_id=eos_id,
+                        attention_mask = attention_mask,
+                        **sub_config,
+                    )
+
+                gens = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+
                 n_gen += len(gens)
                 gens = list(filter(lambda s: is_valid_seq(s, eos), gens))
                 n_kept += len(gens)
-                gens = gens[:(num_samples - i)]
+                gens = gens[: (num_samples - i)]
+
                 with open(gen_file, "a") as f:
                     for seq in gens:
-                        all_gens.loc[len(all_gens)] = {"context_name": ctx_name, "context": ctx, "sequence": seq}
+                        all_gens.loc[len(all_gens)] = {
+                            "context_name": ctx_name,
+                            "context": ctx,
+                            "sequence": seq,
+                        }
                         f.write(f"{ctx_name},{ctx},{seq}\n")
+
                 i += len(gens)
                 pbar.set_description(f"Generations ({n_gen-n_kept}/{n_gen} removed)")
                 pbar.update(len(gens))
+
 
 if __name__ == "__main__":
     main()
