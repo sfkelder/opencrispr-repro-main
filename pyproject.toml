@@ -1,34 +1,47 @@
 [project]
-name = "opencrispr_repro"
+name = "opencrispr_januari_2026"
 version = "0.1.0"
-description = "Reproduction of OpenCRISPR scripts"
+description = "Combined setup for OpenCRISPR Repro and gRNA modeling."
 authors = [
-    { name = "Aadyot Bhatnagar", email = "abhatnagar@profluent.bio" }
+    { name = "Aadyot Bhatnagar", email = "abhatnagar@profluent.bio" } # Original creator
+    { name = "Sjoerd Kelder", email = "s.f.kelder@lumc.nl" } # Januari 2026 update
 ]
 license = "BSD-3-Clause"
 requires-python = ">=3.9"
 dependencies = [
+    # opencrispr_repro dependencies
     "accelerate",
-    "torch",
+    "torch>=1.10",
     "mosaicml>=0.26.0",
     "transformers==4.49",
     "tqdm",
     "pandas",
-    "pynvml",  # Needed for GPU monitoring
+    "pynvml",  # Needed for GPU monitoring 
     "pydantic",
     "click",
-    "ruamel.yaml"
+    "ruamel.yaml",
+    # grna-modeling requirements (also uses transformers)
+    "biopython>=1.79",
+    "biotite>=0.35.0",
+    "einops>=0.6.0",
+    "numpy<2.0.0",
+    "tokenizers",
+    "flake8",
+    "black",
+    "isort",
+    "pre-commit",
+    "pytorch_lightning"
 ]
+
+[project.optional-dependencies]
+test = ["pytest-xdist", "transformers"]
 
 [pypi-options]
 index-url = "https://pypi.org/simple"
 extra-index-urls = ["https://download.pytorch.org/whl/cu124"]  # pin to cuda 12.4
 
-[project.optional-dependencies]
-test = ["pytest-xdist", "transformers"]
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/opencrispr_repro"]
+packages = ["src/opencrispr_repro", "src/grna-modeling/grna_modeling"]
 
 [build-system]
 requires = ["hatchling"]
