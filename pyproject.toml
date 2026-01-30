@@ -43,6 +43,10 @@ extra-index-urls = ["https://download.pytorch.org/whl/cu124"]  # pin to cuda 12.
 [tool.hatch.build.targets.wheel]
 packages = ["src/opencrispr_repro", "src/grna-modeling/grna_modeling"]
 
+[project.scripts]
+opencrispr-train = "opencrispr_repro.main:main"
+opencrispr-generate = "opencrispr_repro.generate:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
