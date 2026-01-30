@@ -3,7 +3,7 @@ name = "opencrispr_januari_2026"
 version = "0.1.0"
 description = "Combined setup for OpenCRISPR Repro and gRNA modeling."
 authors = [
-    { name = "Aadyot Bhatnagar", email = "abhatnagar@profluent.bio" } # Original creator
+    { name = "Aadyot Bhatnagar", email = "abhatnagar@profluent.bio" }, # Original creator
     { name = "Sjoerd Kelder", email = "s.f.kelder@lumc.nl" } # Januari 2026 update
 ]
 license = "BSD-3-Clause"
