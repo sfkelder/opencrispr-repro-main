@@ -41,7 +41,7 @@ index-url = "https://pypi.org/simple"
 extra-index-urls = ["https://download.pytorch.org/whl/cu124"]  # pin to cuda 12.4
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/opencrispr_repro", "src/grna-modeling/grna_modeling"]
+packages = ["src/opencrispr_repro", "src/grna_modeling"]
 
 [project.scripts]
 opencrispr-train = "opencrispr_repro.main:main"
