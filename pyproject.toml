@@ -46,6 +46,7 @@ packages = ["src/opencrispr_repro", "src/grna-modeling/grna_modeling"]
 [project.scripts]
 opencrispr-train = "opencrispr_repro.main:main"
 opencrispr-generate = "opencrispr_repro.generate:main"
+grna-modeling-train = "grna_modeling.trainer:main"
 
 [build-system]
 requires = ["hatchling"]

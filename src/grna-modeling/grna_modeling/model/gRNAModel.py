@@ -82,6 +82,54 @@ class gRNAModel(pl.LightningModule):
 
         self.lm_head = nn.Linear(d_s, vocab_size)
 
+    def training_step(self, batch, batch_idx):
+      output = self.forward(batch)
+
+      # Compute mean loss
+      loss = output.loss.mean() if output.loss is not None else torch.tensor(0.0, device=self.device)
+      
+      # Log metrics
+      self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+      
+      if output.accuracy is not None:
+          self.log('train_acc', output.accuracy.mean(), on_step=True, on_epoch=True, prog_bar=True)
+      
+      if output.perplexity is not None:
+          self.log('train_ppl', output.perplexity.mean(), on_step=True, on_epoch=True, prog_bar=True)
+      
+      return loss
+
+    def validation_step(self, batch, batch_idx):
+      output = self.forward(batch)
+
+      if output.loss is not None:
+          val_loss = output.loss.mean()
+          self.log('val_loss', val_loss, prog_bar=True)
+      
+      if output.accuracy is not None:
+          self.log('val_acc', output.accuracy.mean(), prog_bar=True)
+      
+      if output.perplexity is not None:
+          self.log('val_ppl', output.perplexity.mean(), prog_bar=True)
+
+
+    def configure_optimizers(self):
+      optimizer_cfg = self.hparams.config["optimizer"]
+      initial_lr = optimizer_cfg.get("initial_lr", 1e-3)
+      weight_decay = optimizer_cfg.get("weight_decay", 0.0)
+      warmup_steps = optimizer_cfg.get("warmup", 4000)
+
+      optimizer = torch.optim.Adam(self.parameters(), lr=initial_lr, weight_decay=weight_decay)
+
+      # Inverse square root warmup scheduler (Transformer-style)
+      def lr_lambda(step):
+          step = max(step, 1)
+          return min(step ** -0.5, step * warmup_steps ** -1.5)
+
+      scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+
+      return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
+
     def forward(
         self,
         input: gRNAModelInput,

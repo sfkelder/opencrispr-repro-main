@@ -1,0 +1,43 @@
+# -------------------------
+# Model configuration
+# -------------------------
+esm_model: "facebook/esm2_t6_8M_UR50D"  # ESM model for protein embeddings
+d_s: 128
+d_s_protein: 320
+n_enc_layers: 1
+n_dec_layers: 3
+enc_self_attn:
+  n_heads: 8
+dec_self_attn:
+  n_heads: 8
+dec_cross_attn:
+  n_heads: 8
+
+# -------------------------
+# Dataset configuration
+# -------------------------
+dataset:
+  train_csv: "../../../data/crispr_train.csv"
+  val_csv: "../../../data/crispr_val.csv"
+  columns:
+    rna: "crispr_repeat"
+    protein: "protein"
+    tracr: "tracr"
+
+# -------------------------
+# Training configuration
+# -------------------------
+batch_size: 16
+epochs: 10
+
+optimizer:
+  initial_lr: 0.0002
+  warmup: 4000
+  weight_decay: 0.0
+  acc_batches: 2   # gradient accumulation
+
+# -------------------------
+# Optional: device
+# -------------------------
+device: "cuda"
+
