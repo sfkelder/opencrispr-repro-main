@@ -6,6 +6,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from einops import repeat
 
+from pytorch_lightning.callbacks import ModelCheckpoint
 from grna_modeling.model.gRNAModel import gRNAModel, gRNAModelInput
 from grna_modeling.utility.protein import NucleicAcidBatch, ProteinBatch
 from grna_modeling.utility.esm import ESM2
@@ -93,13 +94,28 @@ def main(config):
 
     model = gRNAModel(cfg)
 
-    trainer = pl.Trainer(
-        max_epochs=cfg["epochs"],
-        accelerator="auto",
-        devices=1,
-        accumulate_grad_batches=cfg["optimizer"]["acc_batches"],
-        log_every_n_steps=1,
+    # Callbacks
+    checkpoint_callback = ModelCheckpoint(
+        dirpath="./checkpoints", 
+        filename="grna_model-{epoch:02d}-{step:05d}-{val_loss:.4f}",  
+        save_top_k=1, 
+        monitor="val_loss",  
+        mode="min",  
+        save_last=True,
     )
+
+    trainer = pl.Trainer(
+            max_epochs=cfg["epochs"],
+            accelerator="gpu",                 
+            devices=-1,                         
+            strategy="ddp",                    
+            precision=16,                       
+            callbacks=[checkpoint_callback],
+            accumulate_grad_batches=cfg["optimizer"]["acc_batches"], 
+            log_every_n_steps=50,              
+            check_val_every_n_epoch=1,        
+            enable_progress_bar=True,          
+        )
 
     # Train
     trainer.fit(model, train_loader, val_loader)

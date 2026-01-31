@@ -89,13 +89,13 @@ class gRNAModel(pl.LightningModule):
       loss = output.loss.mean() if output.loss is not None else torch.tensor(0.0, device=self.device)
       
       # Log metrics
-      self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True)
+      self.log('train_loss', loss, on_step=True, on_epoch=True, sync_dist=True, prog_bar=True)
       
       if output.accuracy is not None:
-          self.log('train_acc', output.accuracy.mean(), on_step=True, on_epoch=True, prog_bar=True)
+          self.log('train_acc', output.accuracy.mean(), on_step=True, on_epoch=True, sync_dist=True, prog_bar=True)
       
       if output.perplexity is not None:
-          self.log('train_ppl', output.perplexity.mean(), on_step=True, on_epoch=True, prog_bar=True)
+          self.log('train_ppl', output.perplexity.mean(), on_step=True, on_epoch=True, sync_dist=True, prog_bar=True)
       
       return loss
 
@@ -104,13 +104,13 @@ class gRNAModel(pl.LightningModule):
 
       if output.loss is not None:
           val_loss = output.loss.mean()
-          self.log('val_loss', val_loss, prog_bar=True)
+          self.log('val_loss', val_loss, sync_dist=True, prog_bar=True)
       
       if output.accuracy is not None:
-          self.log('val_acc', output.accuracy.mean(), prog_bar=True)
+          self.log('val_acc', output.accuracy.mean(), sync_dist=True, prog_bar=True)
       
       if output.perplexity is not None:
-          self.log('val_ppl', output.perplexity.mean(), prog_bar=True)
+          self.log('val_ppl', output.perplexity.mean(), sync_dist=True, prog_bar=True)
 
 
     def configure_optimizers(self):
