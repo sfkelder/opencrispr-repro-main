@@ -38,14 +38,15 @@ def read_config_file(config_path: str) -> dict:
 @click.command()
 @click.option("--model-path", "model_path", required=True, help="Path where model is stored")
 @click.option("--config", "config_path", required=True, help="JSON or YML w/ generation hyperparams")
+@click.option("--save-dir", "save_dir", default='./', help="Path where generated protein sequences are stored")
 @click.option("--job-idx", "job_idx", type=int, default=None, required=False, help="Job index (for parallel jobs)")
-def main(model_path: str, config_path: str, job_idx: int):
+def main(model_path: str, config_path: str, save_dir: str, job_idx: int):
     with open(config_path) as f:
         config = YAML(typ="safe").load(f)
     tokenizer = get_tokenizer(ModelSchema(name="progen2"))
 
     # File in which to save generations
-    gen_dir = os.path.join(ROOT_DIR, "generations")
+    gen_dir = os.path.join(save_dir, "generations")
     gen_file = os.path.join(gen_dir, os.path.basename(config_path)[:-len(".yml")] + ".csv")
     gen_file = gen_file + (f".{job_idx}" if job_idx is not None else "")
 
