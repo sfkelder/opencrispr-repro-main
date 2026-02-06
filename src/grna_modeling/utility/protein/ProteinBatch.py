@@ -10,7 +10,6 @@ from grna_modeling.utility.protein import (
     vocabulary,
 )
 
-
 class ProteinBatch(MacromoleculeBatch):
 
     def __init__(
@@ -100,7 +99,10 @@ class ProteinBatch(MacromoleculeBatch):
         proteins = []
         for record in SeqIO.parse(fasta_file, "fasta"):
             if not exists(record_id) or record.id == record_id:
-                proteins.append(Protein.from_sequence(str(record.seq)))
+              protein = Protein.from_sequence(str(record.seq))
+              protein.metadata["id"] = record.id
+              protein.metadata["sequence"] = record.seq
+              proteins.append(protein)
 
         return ProteinBatch.from_proteins(proteins)
 
