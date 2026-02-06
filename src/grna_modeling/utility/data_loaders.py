@@ -23,7 +23,7 @@ def load_protein_from_csv(
 ) -> ProteinBatch:
     """Load protein sequences from a CSV file. Returns a ProteinBatch."""
 
-    df = pd.read_csv(csv_file, nrows=5)
+    df = pd.read_csv(csv_file)
 
     proteins = []
     for i, row in df.iterrows():
