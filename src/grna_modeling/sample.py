@@ -26,21 +26,21 @@ def protein_from_batch(batch, i: int) -> Protein:
 
 # Single sequence settings
 @click.option("--sequence", help="Single protein sequence string.")
-@click.option("--sequence-id", default='generated_seqence', help="Protein sequence name")
+@click.option("--sequence-id", 'sequence_id', default='generated_sequence', help="Protein sequence name")
 
 # CSV settings
 @click.option("--csv", "csv_file", help="CSV file with protein sequences.")
-@click.option("--sequence-col", "sequence_col", default="sequence", help="Column with protein sequences.")
+@click.option("--sequence-col", 'sequence_col', default="sequence", help="Column with protein sequences.")
 @click.option("--id-col", "id_col", default=None, help="Column with protein name/id.")
 
 # Fasta settings
 @click.option("--fasta", "fasta_file", help="FASTA file with protein sequences.")
 
 # Generation settings
-@click.option("--num-samples", default=5, type=int, help="Number of gRNAs to sample per protein.")
+@click.option("--num-samples", 'num_samples', default=5, type=int, help="Number of gRNAs to sample per protein.")
 @click.option("--temperature", default=1.0, type=float, help="Sampling temperature, by default 1")
-@click.option("--batch_size", default=1, type=int, help=" Batch size for sampling, by default 1")
-@click.option("--max_len", default=300, type=int, help="Maximum length of the generated sequences, by default 300")
+@click.option("--batch-size", 'batch_size', default=1, type=int, help=" Batch size for sampling, by default 1")
+@click.option("--max-len", 'max_len', default=300, type=int, help="Maximum length of the generated sequences, by default 300")
 @click.option("--silent", default=True, help="Whether to show progress bar, by default True")
 
 # Output dir

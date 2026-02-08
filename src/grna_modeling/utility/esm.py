@@ -23,7 +23,7 @@ class ESM2:
             sequence,
             return_tensors="pt",
             padding=True,
-            truncation=True,
+            truncation=False,
         ).to(self.device)
 
         # run ESM2
