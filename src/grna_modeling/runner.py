@@ -21,18 +21,11 @@ class gRNAModelRunner():
 
     def __init__(
         self,
-        esm_model="esm8m",
-        cluster_id=90,
-        cache_dir: str = None,
+        ckpt_path: str,
         device: str = "cuda",
     ) -> None:
-        # ckpt_file = get_parameters(
-        #     esm_model=esm_model,
-        #     cluster_id=cluster_id,
-        #     cache_dir=cache_dir,
-        # )
         
-        self.model = gRNAModel.load_from_checkpoint('./checkpoints_grna-model_grna-model-esm8m-id90_version_0_checkpoints_epoch=39-step=62400.ckpt')
+        self.model = gRNAModel.load_from_checkpoint(ckpt_path)
         esm_name = self.model.hparams.config["esm_model"]
         
         if not esm_name.startswith("facebook/"):

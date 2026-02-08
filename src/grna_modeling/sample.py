@@ -42,14 +42,29 @@ def protein_from_batch(batch, i: int) -> Protein:
 @click.option("--batch-size", 'batch_size', default=1, type=int, help=" Batch size for sampling, by default 1")
 @click.option("--max-len", 'max_len', default=300, type=int, help="Maximum length of the generated sequences, by default 300")
 @click.option("--silent", default=True, help="Whether to show progress bar, by default True")
+@click.option("--ckpt-path", "ckpt_path", type=click.Path(exists=True), required=True, help="Path to model ckpt file")
 
 # Output dir
 @click.option("--output", default='./', type=str, help="Output CSV file path, default to current working dir")
-def main(sequence, sequence_id, csv_file, fasta_file, num_samples, temperature, batch_size, max_len, output, silent, sequence_col, id_col):
+def main(
+    sequence, 
+    sequence_id, 
+    csv_file, 
+    fasta_file, 
+    num_samples, 
+    temperature, 
+    batch_size, 
+    max_len, 
+    output, 
+    silent, 
+    sequence_col, 
+    id_col, 
+    ckpt_path
+    ):
     """
     Sample gRNAs from a protein or multiple proteins, and write results to CSV.
     """
-    runner = gRNAModelRunner()
+    runner = gRNAModelRunner(ckpt_path=ckpt_path)
     results = []
 
     # Load protein(s)
