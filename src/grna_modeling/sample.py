@@ -29,19 +29,19 @@ def protein_from_batch(batch, i: int) -> Protein:
 @click.option("--sequence-id", 'sequence_id', default='generated_sequence', help="Protein sequence name")
 
 # CSV settings
-@click.option("--csv", "csv_file", help="CSV file with protein sequences.")
+@click.option("--csv", "csv_file", type=click.Path(exists=True), help="CSV file with protein sequences.")
 @click.option("--sequence-col", 'sequence_col', default="sequence", help="Column with protein sequences.")
 @click.option("--id-col", "id_col", default=None, help="Column with protein name/id.")
 
 # Fasta settings
-@click.option("--fasta", "fasta_file", help="FASTA file with protein sequences.")
+@click.option("--fasta", "fasta_file", type=click.Path(exists=True), help="FASTA file with protein sequences.")
 
 # Generation settings
 @click.option("--num-samples", 'num_samples', default=5, type=int, help="Number of gRNAs to sample per protein.")
 @click.option("--temperature", default=1.0, type=float, help="Sampling temperature, by default 1")
 @click.option("--batch-size", 'batch_size', default=1, type=int, help=" Batch size for sampling, by default 1")
 @click.option("--max-len", 'max_len', default=300, type=int, help="Maximum length of the generated sequences, by default 300")
-@click.option("--silent", default=True, help="Whether to show progress bar, by default True")
+@click.option("--silent", default=True, type=bool, help="Whether to show progress bar, by default True")
 @click.option("--ckpt-path", "ckpt_path", type=click.Path(exists=True), required=True, help="Path to model ckpt file")
 
 # Output dir
