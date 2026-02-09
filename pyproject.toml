@@ -48,6 +48,7 @@ opencrispr-train = "opencrispr_repro.main:main"
 opencrispr-generate = "opencrispr_repro.generate:main"
 grna-modeling-train = "grna_modeling.trainer:main"
 grna-modeling-sample = "grna_modeling.sample:main"
+grna-modeling-score = "grna_modeling.score:main"
 
 [build-system]
 requires = ["hatchling"]
