@@ -45,4 +45,6 @@ class InvSqrtWithWarmupScheduler(ComposerScheduler):
             return self.warmup_scheduler(state)
 
         current_time = state.timestamp.get(t_warmup.unit)
-        return ((current_time - t_warmup) / t_warmup) ** -0.5
+        base = float((current_time - t_warmup) / t_warmup)
+        base = max(base, 1e-8) # Avoid division by zero but keep impact very small
+        return  base ** -0.5
