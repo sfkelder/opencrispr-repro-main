@@ -17,8 +17,8 @@ dec_cross_attn:
 # Dataset configuration
 # -------------------------
 dataset:
-  train_csv: "./data/crispr_train.csv"
-  val_csv: "./data/crispr_val.csv"
+  train_csv: "./opencrispr-repro-main/data/crispr_train_test.csv"
+  val_csv: "./opencrispr-repro-main/data/crispr_val_test.csv"
   columns:
     rna: "crispr_repeat"
     protein: "protein"

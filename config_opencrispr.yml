@@ -1,8 +1,8 @@
 save_folder: ./checkpoints
 data:
   sequence_col: protein
-  train_data_path: ./data/crispr_train.csv
-  val_data_path: ./data/crispr_val.csv
+  train_data_path: "./opencrispr-repro-main/data/crispr_train_test.csv" 
+  val_data_path: "./opencrispr-repro-main/data/crispr_val_test.csv"
   label_col: null 
   batch_size: 8
   num_workers: 2
