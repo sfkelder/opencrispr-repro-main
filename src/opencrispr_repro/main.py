@@ -2,6 +2,7 @@ import json
 import logging
 import os
 
+import datetime
 import click
 import torch
 import torch.distributed as dist
@@ -15,10 +16,17 @@ logger = logging.getLogger()
 
 
 def setup_dist() -> None:
-    rank = int(os.environ.get("RANK", -1))
-    if dist.is_available() and torch.cuda.is_available() and rank != -1:
-        torch.distributed.init_process_group(backend="nccl")
-    torch.cuda.set_device(int(os.environ.get("LOCAL_RANK", 0)))
+    rank = int(os.environ.get("RANK", 0))
+    local_rank = int(os.environ.get("LOCAL_RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+
+    torch.cuda.set_device(local_rank)
+    print(f"[Rank {rank} / local_rank {local_rank} / world_size {world_size}] Using CUDA device {torch.cuda.current_device()}")
+
+    if dist.is_available() and world_size > 1:
+        print(f"[Rank {rank}] Initializing distributed process group with backend 'nccl'")
+        dist.init_process_group(backend="nccl", timeout=datetime.timedelta(minutes=30))
+    
 
 
 def read_config_file(config_path: str) -> dict:
