@@ -95,7 +95,7 @@ def get_trainer(config: FinetuneAPI):
         algorithms=algorithms,
         step_schedulers_every_batch=True,
         # Save/load
-        autoresume=False,
+        autoresume=True,
         callbacks=[checkpointer],
         save_folder=config.save_folder,
         save_filename="ba{batch}-rank{rank}.pt",
