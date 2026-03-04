@@ -95,6 +95,7 @@ def get_trainer(config: FinetuneAPI):
         algorithms=algorithms,
         step_schedulers_every_batch=True,
         # Save/load
+        run_name="opencrispr-finetune",
         autoresume=True,
         callbacks=[checkpointer],
         save_folder=config.save_folder,
