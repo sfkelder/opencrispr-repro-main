@@ -37,8 +37,8 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
 
     # internal working columns
     df["__protein__"] = df[protein_col].astype(str)
-    df["__tracr__"] = df[tracr_col].astype(str)
-    df["__crispr__"] = df[crispr_col].astype(str)
+    df["__tracr__"] = df[tracr_col].fillna("").astype(str)
+    df["__crispr__"] = df[crispr_col].fillna("").astype(str)
 
     # ------------------------
     # Load model runner
@@ -99,7 +99,7 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
     # Save output
     # ------------------------
     df.to_csv(f"{output}/grna_predictions.csv", index=False)
-    click.echo(f"Saved scored CSV to {output}")
+    click.echo(f"Saved scored CSV to {output}/grna_predictions.csv")
 
 
 if __name__ == "__main__":

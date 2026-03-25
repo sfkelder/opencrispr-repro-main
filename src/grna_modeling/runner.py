@@ -24,13 +24,13 @@ class gRNAModelRunner():
         ckpt_path: str,
         device: str = "cuda",
     ) -> None:
-        
+
         self.model = gRNAModel.load_from_checkpoint(ckpt_path)
         esm_name = self.model.hparams.config["esm_model"]
-        
+
         if not esm_name.startswith("facebook/"):
             esm_name = f"facebook/{esm_name}"
-        
+
         self.esm = ESM2(
             model=esm_name,
             device=device,

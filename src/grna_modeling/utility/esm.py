@@ -35,7 +35,9 @@ class ESM2:
 
         # strip special BOS/EOS tokens if present
         if hasattr(self.tokenizer, "bos_token_id"):
-            embeddings = embeddings[:, 1:-1, :]
+            embeddings = embeddings[:, 1:, :]  # remove BOS
+        if hasattr(self.tokenizer, "eos_token_id"):
+            embeddings = embeddings[:, :-1, :]  # remove EOS
 
         # if single string, squeeze batch dim
         if isinstance(sequence, str):

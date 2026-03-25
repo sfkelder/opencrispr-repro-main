@@ -1,28 +1,26 @@
-import yaml
+import os
+import pickle
 import click
+import yaml
 import torch
-from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-import pytorch_lightning as pl
-from einops import repeat
+import hashlib
 
+from torch.utils.data import Dataset, DataLoader
+import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
+
 from grna_modeling.model.gRNAModel import gRNAModel, gRNAModelInput
 from grna_modeling.utility.protein import NucleicAcidBatch, ProteinBatch
 from grna_modeling.utility.esm import ESM2
+from grna_modeling.utility import vocabulary
 
-class gRNADataset(Dataset):
-    def __init__(self, rna_seqs, protein_seqs, esm_model: ESM2, device="cuda"):
+
+class gRNADatasetWithIdx(Dataset):
+    """Dataset that includes indices for mapping to embeddings."""
+    def __init__(self, rna_seqs, protein_seqs):
         self.rna_seqs = rna_seqs
         self.protein_seqs = protein_seqs
-        self.esm_model = esm_model
-        self.device = device
-
-        # Precompute embeddings
-        self.protein_embs = []
-        for seq in protein_seqs:
-            emb = esm_model.embed(seq).to(device) 
-            self.protein_embs.append(emb)
 
     def __len__(self):
         return len(self.rna_seqs)
@@ -31,93 +29,187 @@ class gRNADataset(Dataset):
         return {
             "rna": self.rna_seqs[idx],
             "protein": self.protein_seqs[idx],
-            "protein_emb": self.protein_embs[idx],
+            "idx": idx,
         }
 
-def collate_fn(batch):
-    # RNA batch
-    rna_batch = NucleicAcidBatch.from_sequences([b["rna"] for b in batch])
 
-    # Protein batch
-    protein_batch = ProteinBatch.from_sequences([b["protein"] for b in batch])
+def build_rna_targets(df: pd.DataFrame, columns_cfg: dict, tracr_first: bool = True):
+    """Build RNA and protein sequences, ensuring lowercase RNA sequences."""
+    protein_col = columns_cfg["protein"]
+    tracr_col = columns_cfg.get("tracr")
+    crispr_col = columns_cfg.get("crispr")
 
-    # Pad protein embeddings to max length in batch
-    protein_embs_list = [b["protein_emb"] for b in batch]
-    max_len = max(e.size(0) for e in protein_embs_list)
-    d_s_protein = protein_embs_list[0].size(1)
+    if crispr_col not in df.columns:
+        raise ValueError(f"Missing crispr column: {crispr_col}")
+    if protein_col not in df.columns:
+        raise ValueError(f"Missing protein column: {protein_col}")
 
-    padded_embs = []
-    for e in protein_embs_list:
-        pad_len = max_len - e.size(0)
-        if pad_len > 0:
-            e = torch.cat([e, torch.zeros(pad_len, d_s_protein).to(e.device)], dim=0)
-        padded_embs.append(e)
+    # tracr sequences, lowercase
+    if tracr_col in df.columns:
+        tracr_seqs = df[tracr_col].fillna("").astype(str).str.lower().tolist()
+    else:
+        tracr_seqs = [""] * len(df)
 
-    protein_embs = torch.stack(padded_embs, dim=0)  # (B, L_max, d_s_protein)
+    # crispr sequences, lowercase
+    crispr_seqs = df[crispr_col].fillna("").astype(str).str.lower().tolist()
 
-    return gRNAModelInput(
-        rna_batch=rna_batch,
-        protein_batch=protein_batch,
-        protein_embs=protein_embs,
-        S_label=rna_batch.S,
+    rna_seqs = vocabulary.concat_rna_sequences(
+        tracr_seqs,
+        crispr_seqs,
+        tracr_first=tracr_first
     )
+    protein_seqs = df[protein_col].astype(str).tolist()
+
+    return rna_seqs, protein_seqs
+
+
+def make_collate_fn(esm_model, save_embeddings=False, embeddings_dir=None, split="train"):
+    """
+    Collate function that:
+    - Uses content-based hashing for caching
+    - Logs cache hits/misses
+    - Pads protein embeddings
+    """
+    if save_embeddings:
+        embeddings_dir = os.path.abspath(embeddings_dir)
+        os.makedirs(embeddings_dir, exist_ok=True)
+
+    def hash_seq(seq: str) -> str:
+        return hashlib.sha1(seq.strip().encode()).hexdigest()
+
+    def collate_fn(batch):
+        rna_batch = NucleicAcidBatch.from_sequences([b["rna"] for b in batch])
+        protein_seqs = [b["protein"] for b in batch]
+        protein_embs_list = []
+
+        hits, misses = 0, 0
+
+        for b in batch:
+            protein = b["protein"]
+
+            if save_embeddings:
+                key = hash_seq(protein)
+                emb_path = os.path.join(embeddings_dir, f"{key}.pkl")
+
+                if os.path.exists(emb_path):
+                    with open(emb_path, "rb") as f:
+                        emb = pickle.load(f)
+                    hits += 1
+                else:
+                    emb = esm_model.embed(protein)
+                    with open(emb_path, "wb") as f:
+                        pickle.dump(emb, f)
+                    misses += 1
+            else:
+                emb = esm_model.embed(protein)
+
+            protein_embs_list.append(emb)
+
+        if save_embeddings:
+            print(f"[{split}] cache hits: {hits}, misses: {misses}")
+
+        # Pad embeddings along sequence length
+        max_len = max(e.size(0) for e in protein_embs_list)
+        d_s_protein = protein_embs_list[0].size(1)
+
+        padded_embs = []
+        for e in protein_embs_list:
+            pad_len = max_len - e.size(0)
+            if pad_len > 0:
+                e = torch.cat(
+                    [e, torch.zeros(pad_len, d_s_protein, device=e.device)],
+                    dim=0
+                )
+            padded_embs.append(e)
+
+        protein_embs = torch.stack(padded_embs, dim=0).to(rna_batch.S.device)
+
+        return gRNAModelInput(
+            rna_batch=rna_batch,
+            protein_batch=ProteinBatch.from_sequences(protein_seqs),
+            protein_embs=protein_embs,
+            S_label=rna_batch.S,
+        )
+
+    return collate_fn
+
 
 @click.command()
-@click.option("--config", type=click.Path(exists=True), required=True, help="Path to YAML config file")
-def main(config):
-    # Load config
+@click.option("--config", type=click.Path(exists=True), required=True)
+@click.option("--save-embeddings", is_flag=True, default=False)
+@click.option("--embeddings-dir", type=click.Path(), default="./embeddings")
+def main(config, save_embeddings, embeddings_dir):
     with open(config, "r") as f:
         cfg = yaml.safe_load(f)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # Load ESM model for embeddings
     esm_model = ESM2(cfg["esm_model"], device=device)
 
     dataset_cfg = cfg["dataset"]
-    rna_col = dataset_cfg["columns"]["rna"]
-    protein_col = dataset_cfg["columns"]["protein"]
+    columns_cfg = dataset_cfg["columns"]
+    tracr_first = dataset_cfg.get("tracr_first", True)
 
-    # Train
+    # --- Train ---
     df_train = pd.read_csv(dataset_cfg["train_csv"])
-    rna_train = df_train[rna_col].tolist()
-    protein_train = df_train[protein_col].tolist()
-    train_dataset = gRNADataset(rna_train, protein_train, esm_model, device=device)
-    train_loader = DataLoader(train_dataset, batch_size=cfg["batch_size"], shuffle=True, collate_fn=collate_fn)
+    rna_train, protein_train = build_rna_targets(df_train, columns_cfg, tracr_first)
 
-    # Validation
+    train_dataset = gRNADatasetWithIdx(rna_train, protein_train)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=cfg["batch_size"],
+        shuffle=True,
+        num_workers=0,
+        collate_fn=make_collate_fn(
+            esm_model,
+            save_embeddings,
+            embeddings_dir,
+            split="train"
+        ),
+    )
+
+    # --- Validation ---
     df_val = pd.read_csv(dataset_cfg["val_csv"])
-    rna_val = df_val[rna_col].tolist()
-    protein_val = df_val[protein_col].tolist()
-    val_dataset = gRNADataset(rna_val, protein_val, esm_model, device=device)
-    val_loader = DataLoader(val_dataset, batch_size=cfg["batch_size"], shuffle=False, collate_fn=collate_fn)
+    rna_val, protein_val = build_rna_targets(df_val, columns_cfg, tracr_first)
 
+    val_dataset = gRNADatasetWithIdx(rna_val, protein_val)
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=cfg["batch_size"],
+        shuffle=False,
+        num_workers=0,
+        collate_fn=make_collate_fn(
+            esm_model,
+            save_embeddings,
+            embeddings_dir,
+            split="val"
+        ),
+    )
+
+    # --- Model ---
     model = gRNAModel(cfg)
 
-    # Callbacks
     checkpoint_callback = ModelCheckpoint(
-        dirpath="./checkpoints", 
-        filename="grna_model-{epoch:02d}-{step:05d}-{val_loss:.4f}",  
-        save_top_k=1, 
-        monitor="val_loss",  
-        mode="min",  
+        dirpath="./checkpoints",
+        filename="grna_model-{epoch:02d}-{step:05d}-{val_loss:.4f}",
+        save_top_k=1,
+        monitor="val_loss",
+        mode="min",
         save_last=True,
     )
 
     trainer = pl.Trainer(
-            max_epochs=cfg["epochs"],
-            accelerator="gpu",                 
-            devices=-1,                         
-            strategy="ddp",                    
-            precision=16,                       
-            callbacks=[checkpoint_callback],
-            accumulate_grad_batches=cfg["optimizer"]["acc_batches"], 
-            log_every_n_steps=50,              
-            check_val_every_n_epoch=1,        
-            enable_progress_bar=True,          
-        )
+        max_epochs=cfg["epochs"],
+        accelerator="gpu",
+        devices=-1,
+        strategy="auto",
+        precision=16,
+        callbacks=[checkpoint_callback],
+        accumulate_grad_batches=cfg["optimizer"]["acc_batches"],
+        log_every_n_steps=50,
+        check_val_every_n_epoch=1,
+        enable_progress_bar=True,
+    )
 
-    # Train
     trainer.fit(model, train_loader, val_loader)
 
 if __name__ == "__main__":

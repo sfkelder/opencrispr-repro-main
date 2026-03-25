@@ -26,7 +26,7 @@ def setup_dist() -> None:
     if dist.is_available() and world_size > 1:
         print(f"[Rank {rank}] Initializing distributed process group with backend 'nccl'")
         dist.init_process_group(backend="nccl", timeout=datetime.timedelta(minutes=30))
-    
+
 
 
 def read_config_file(config_path: str) -> dict:

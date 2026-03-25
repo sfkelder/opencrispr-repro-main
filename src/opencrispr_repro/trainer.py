@@ -58,7 +58,7 @@ def get_trainer(config: FinetuneAPI):
             clipping_threshold=float(clipping_threshold),
         )
         algorithms.append(gradclip)
-    
+
     half = "bfloat16"
     save_interval = f"{config.save_interval_steps}ba"
     checkpointer = HuggingFaceCheckpointer(save_folder=config.save_folder, save_interval=save_interval, precision=half)
@@ -95,7 +95,7 @@ def get_trainer(config: FinetuneAPI):
         algorithms=algorithms,
         step_schedulers_every_batch=True,
         # Save/load
-        run_name="opencrispr-finetune",
+        run_name='huggingface',
         autoresume=True,
         callbacks=[checkpointer],
         save_folder=config.save_folder,

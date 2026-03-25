@@ -20,7 +20,7 @@ dataset:
   train_csv: "./opencrispr-repro-main/data/crispr_train_test.csv"
   val_csv: "./opencrispr-repro-main/data/crispr_val_test.csv"
   columns:
-    rna: "crispr_repeat"
+    crispr: "crispr_repeat"
     protein: "protein"
     tracr: "tracr"
 
@@ -28,12 +28,12 @@ dataset:
 # Training configuration
 # -------------------------
 batch_size: 16
-epochs: 10
+epochs: 12
 
 optimizer:
   initial_lr: 0.0002
-  warmup: 4000
-  weight_decay: 0.0
+  warmup: 800
+  weight_decay: 0.001
   acc_batches: 2   # gradient accumulation
 
 # -------------------------
