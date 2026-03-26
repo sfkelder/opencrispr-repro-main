@@ -83,6 +83,135 @@ git clone https://github.com/sara-nl/ESMFold_Snellius
 > and ESMFold can run reliably.
 
 
+## Configuration files
+The Protein- and crRNA generation models require configuration files to run. Aditionaly protein prediction requires another seperate configuration file.
+
+### Protein model configuration
+The protein model needs configuration for training and generation. This configuration is done using a `.yml` style setup. Below is an example configuration.
+
+```
+# Folder where checkpoints and model outputs will be saved
+save_folder: ./checkpoints
+
+data:
+  # Column containing protein sequences
+  sequence_col: protein
+  # Paths to training and validation CSV files
+  train_data_path: "./opencrispr-repro-main/data/crispr_train_test.csv"
+  val_data_path: "./opencrispr-repro-main/data/crispr_val_test.csv"
+  # Label column (if applicable, otherwise null)
+  label_col: null
+  # Batch_size specifies how many samples are fed through the model per training step.
+  # If set to high the model could run out of memmory.
+  batch_size: 4
+  num_workers: 2
+
+model:
+  # Always keep name as progen2
+  name: progen2
+  # This determines the size of the model that is used, see Progen2 git for more 
+  # information
+  path: base
+
+training:
+  # Training parameters
+  learning_rate: 0.0001
+  weight_decay: 0.001
+  warmup_steps: 1000
+  train_steps: 10000
+  total_lr_decay_factor: 0.2
+  gradient_clipping_threshold: 1.0
+
+# Interval (in steps) at which to save checkpoints
+save_interval_steps: 1000
+```
+
+### Protein generation configuration
+Protein generation requires a configuration file in `.yml` format. Below is an example of a minimal setup:
+
+```
+# Minimal setup
+context:
+  # Name of this generation run
+  name: some_name
+  # Protein sequence to start generation from. 
+  # Use "1" for unconditional generation
+  seq: "1"
+```
+
+```
+# Optional extensions
+num_samples: 1000      # Number of protein sequences to generate
+batch_size: 10         # Number of sequences per batch
+temperature: 1         # Sampling temperature for diversity
+top_p: 1               # Nucleus sampling probability
+top_k: 0               # Top-K sampling cutoff
+```
+
+> [!Note]
+> 1. The `seq` value must always be enclosed in double quotes `" "`.
+> 2. The `seq` value can be any length but must contain only valid protein residues.
+> 3. The first character must be either `"1"` or `"2"`:
+>    - `"1"` → start generation from the N-terminus
+>    - `"2"` → start generation from the C-terminus
+> 4. For unconditional generation, use `"1"`.
+
+### crRNA model configuration
+The crRNA model requires a configuration file in `.yml` format. Below is an example file.
+
+```
+# -------------------------
+# Model configuration
+# -------------------------
+
+# Always keep these settings inline with the esm_model. 
+esm_model: "facebook/esm2_t6_8M_UR50D" 
+d_s: 128
+d_s_protein: 320
+n_enc_layers: 1
+n_dec_layers: 3
+enc_self_attn:
+  n_heads: 8
+dec_self_attn:
+  n_heads: 8
+dec_cross_attn:
+  n_heads: 8
+
+# -------------------------
+# Dataset configuration
+# -------------------------
+dataset:
+  # Paths to training and validation CSV files
+  train_csv: "./opencrispr-repro-main/data/crispr_train_test.csv"
+  val_csv: "./opencrispr-repro-main/data/crispr_val_test.csv"
+  columns:
+    # Colums used for training
+    crispr: "crispr_repeat"
+    protein: "protein"
+    tracr: "tracr"
+
+# -------------------------
+# Training configuration
+# -------------------------
+batch_size: 16
+epochs: 12
+
+optimizer:
+  initial_lr: 0.0002
+  warmup: 800
+  weight_decay: 0.001
+  acc_batches: 2   # gradient accumulation
+
+# -------------------------
+# Optional: device
+# -------------------------
+device: "cuda"
+```
+
+> [!WARNING]
+> The columns crispr, protein and tracr must always be provided. If the CRISPR-Cas type
+> does not include a tracr please provide a column name with empty values.
+
 ## Citations
 
 **Nijkamp, E., Ruffolo, J., Weinstein, E.N., Naik, N., & Madani, A.** ProGen2: Exploring the Boundaries of Protein Language Models. arXiv preprint arXiv:2206.13517 (2022). https://arxiv.org/abs/2206.13517
