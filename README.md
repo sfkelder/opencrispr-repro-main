@@ -125,6 +125,18 @@ training:
 # Interval (in steps) at which to save checkpoints
 save_interval_steps: 1000
 ```
+> [!CAUTION]
+>  **Caution: Invalid Amino Acid Tokens (X, O, Z)**
+>
+> The original ProGen2 model may generate non-standard amino acid tokens such as `X`, `O`, or `Z`.  
+> These tokens are **not supported by ESM-based models** and may cause failures in downstream preprocessing or embedding steps.
+>
+> This issue can occur if the model is not properly trained or fine-tuned (e.g., due to an excessively low learning rate or insufficient convergence).
+>
+> **Recommendations:**
+> - Validate generated sequences before passing them to ESM.
+> - Filter out sequences containing unsupported tokens (`X`, `O`, `Z`).
+> - Ensure proper training settings (e.g., appropriate learning rate and sufficient training steps).
 
 ### Protein generation configuration
 Protein generation requires a configuration file in `.yml` format. Below is an example of a minimal setup:
@@ -211,6 +223,86 @@ device: "cuda"
 > [!WARNING]
 > The columns crispr, protein and tracr must always be provided. If the CRISPR-Cas type
 > does not include a tracr please provide a column name with empty values.
+
+## Usage
+
+### Protein model training
+```
+opencrispr-train --config path/to/config.yml [--eval-only]
+```
+
+| Argument      | Type   | Default | Description                                                                                 |
+| ------------- | ------ | ------- | ------------------------------------------------------------------------------------------- |
+| `--config`    | string | —       | **Required.** Path to a JSON or YAML configuration file following the `FinetuneAPI` schema. |
+| `--eval-only` | flag   | `False` | Optional. Run evaluation only without training.                                             |
+
+
+### Protein model generation
+```
+opencrispr-generate --model-path PATH_TO_MODEL \
+                            --config PATH_TO_CONFIG \
+                            [--save-dir PATH_TO_OUTPUT] \
+                            [--job-idx JOB_INDEX]
+```
+
+| Argument       | Type   | Default | Description                                                                                                      |
+| -------------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `--model-path` | string | —       | **Required.** Path to the trained model directory.                                                               |
+| `--config`     | string | —       | **Required.** Path to a JSON or YAML file containing generation hyperparameters. Must include a `context` field. |
+| `--save-dir`   | string | `'./'`  | Optional. Directory to save generated protein sequences (default: current folder).                               |
+| `--job-idx`    | string | `None`  | Optional. Index for parallel jobs; appends `_JOBIDX` to output files to avoid overwriting.                       |
+
+
+### crRNA model training
+```
+python train_grna.py --config PATH_TO_CONFIG [--save-embeddings] [--embeddings-dir PATH]
+```
+
+| Argument            | Type           | Default        | Description                                                                                                          |
+| ------------------- | -------------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `--config`          | file path      | —              | **Required.** Path to a YAML configuration file defining dataset paths, model hyperparameters, and training options. |
+| `--save-embeddings` | flag           | `False`        | Optional. If set, protein embeddings will be cached to disk for faster subsequent runs.                              |
+| `--embeddings-dir`  | directory path | `./embeddings` | Optional. Directory where protein embeddings are stored when `--save-embeddings` is used.                            |
+
+
+### crRNA model sample
+```
+grna-modeling-train --ckpt-path PATH_TO_CHECKPOINT [INPUT_OPTIONS] [SAMPLING_OPTIONS] [OUTPUT_OPTIONS]
+```
+
+
+**INPUT_OPTIONS**
+| Argument         | Type      | Default                | Description                                                    |
+| ---------------- | --------- | ---------------------- | -------------------------------------------------------------- |
+| `--sequence`     | string    | —                      | Single protein sequence string. Provide only one input source. |
+| `--sequence-id`  | string    | `"generated_sequence"` | Name/ID for the protein sequence (used in output).             |
+| `--csv`          | file path | —                      | CSV file containing protein sequences.                         |
+| `--sequence-col` | string    | `"sequence"`           | Column in CSV with protein sequences.                          |
+| `--id-col`       | string    | `None`                 | Column in CSV with protein IDs/names.                          |
+| `--fasta`        | file path | —                      | FASTA file containing protein sequences.                       |
+
+> [!WARNING]
+> **Exactly one** of `--sequence`, `--csv`, or `--fasta` must be provided.
+
+
+
+**SAMPLING_OPTIONS**
+| Argument        | Type  | Default | Description                                            |
+| --------------- | ----- | ------- | ------------------------------------------------------ |
+| `--num-samples` | int   | `5`     | Number of gRNAs to sample per protein.                 |
+| `--temperature` | float | `1.0`   | Sampling temperature controlling randomness/diversity. |
+| `--batch-size`  | int   | `1`     | Batch size for gRNA sampling.                          |
+| `--max-len`     | int   | `300`   | Maximum length of generated gRNA sequences.            |
+| `--silent`      | flag  | `False` | Disable progress output.                               |
+
+
+
+**OUTPUT_OPTIONS**
+| Argument      | Type      | Default | Description                                       |
+| ------------- | --------- | ------- | ------------------------------------------------- |
+| `--ckpt-path` | file path | —       | **Required.** Path to trained model checkpoint.   |
+| `--output`    | directory | `"./"`  | Directory where generated gRNA CSV will be saved. |
+
 
 ## Citations
 
