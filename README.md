@@ -70,8 +70,8 @@ The pipeline requires ESMFold as a dependency.
 git clone https://github.com/sara-nl/ESMFold_Snellius
 ```
 
-[!WARNING]
->In the current setup, ESMFold may require a different CUDA version than the one 
+> [!WARNING]
+> In the current setup, ESMFold may require a different CUDA version than the one 
 > previously installed.
 
 > On an HPC system, this can be resolved by loading the appropriate module, as 
