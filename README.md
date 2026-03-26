@@ -24,6 +24,6 @@ cd opencrispr-repro-main
 pip install .
 ```
 
-> **Note:** 
+> [!NOTE]
 > If the installation fails, you can use the included requirements.txt file, which 
 > contains the exact dependency versions used for this project.
