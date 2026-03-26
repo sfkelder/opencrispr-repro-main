@@ -132,11 +132,7 @@ save_interval_steps: 1000
 > These tokens are **not supported by ESM-based models** and may cause failures in downstream preprocessing or embedding steps.
 >
 > This issue can occur if the model is not properly trained or fine-tuned (e.g., due to an excessively low learning rate or insufficient convergence).
->
-> **Recommendations:**
-> - Validate generated sequences before passing them to ESM.
-> - Filter out sequences containing unsupported tokens (`X`, `O`, `Z`).
-> - Ensure proper training settings (e.g., appropriate learning rate and sufficient training steps).
+
 
 ### Protein generation configuration
 Protein generation requires a configuration file in `.yml` format. Below is an example of a minimal setup:
