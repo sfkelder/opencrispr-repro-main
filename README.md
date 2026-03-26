@@ -60,7 +60,7 @@ python -m pip install torch==2.10.0+cu128 torchvision torchaudio --extra-index-u
 
 Pip dependencies:
 ```
-python -m pip install fair-esm seaborn accelerate
+python -m pip install pandas tqdm biopython numpy scikit-learn matplotlib seaborn filelock fair-esm accelerate
 ```
 
 ### 3. Download ESMFold

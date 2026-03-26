@@ -1,0 +1,13 @@
+numpy
+pandas
+scikit-learn
+biopython
+filelock
+matplotlib
+seaborn
+tqdm
+torch==2.10.0+cu128
+torchvision
+torchaudio
+fair-esm
+accelerate
