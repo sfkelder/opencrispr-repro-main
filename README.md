@@ -83,3 +83,10 @@ git clone https://github.com/sara-nl/ESMFold_Snellius
 > and ESMFold can run reliably.
 
 
+## Citations
+
+**Nijkamp, E., Ruffolo, J., Weinstein, E.N., Naik, N., & Madani, A.** ProGen2: Exploring the Boundaries of Protein Language Models. arXiv preprint arXiv:2206.13517 (2022). https://arxiv.org/abs/2206.13517
+
+**Ruffolo, J.A., Nayfach, S., Gallagher, J. et al.** Design of highly functional genome editors by modelling CRISPR–Cas sequences. Nature 645, 518–525 (2025). https://doi.org/10.1038/s41586-025-09298-z
+
+
