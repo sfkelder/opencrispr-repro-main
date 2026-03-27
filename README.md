@@ -366,6 +366,17 @@ grna-modeling-score --input PATH_TO_INPUT_CSV \
 > The columns crispr, protein and tracr must always be provided. If the CRISPR-Cas type
 > does not include a tracr please provide a column name with empty values.
 
+**Output**
+The script generates a CSV file with columns:
+| Column       | Description                             |
+| ------------ | --------------------------------------- |
+| `grna_id`    | Unique hash-based ID for the gRNA pair. |
+| `protein_id` | Protein sequence ID or name.            |
+| `protein`    | Protein sequence string.                |
+| `tracrRNA`   | Generated tracrRNA sequence.            |
+| `crRNA`      | Generated crRNA sequence.               |
+
+
 ## Citations
 
 **Nijkamp, E., Ruffolo, J., Weinstein, E.N., Naik, N., & Madani, A.** ProGen2: Exploring the Boundaries of Protein Language Models. arXiv preprint arXiv:2206.13517 (2022). https://arxiv.org/abs/2206.13517
