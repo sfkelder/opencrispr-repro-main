@@ -26,7 +26,7 @@ python clean_sequences.py --input_path PATH_TO_INPUT \
 **Output**
 Cleaned files are saved with the same filename and format in the specified output directory.
 
-> [WARNING]
+> [!WARNING]
 > If models are improperley trained, they could generate seuences with repeated BOS and
 > EOS. This script filters out all sequences with repeated BOS and EOS tokens.  
 
@@ -66,6 +66,7 @@ python csv_to_fasta.py --input_path PATH \
 2. Defaults to ceating file per sequence containing only one sequence. 
 
 ### foldseek
+Before using this file, check setup in main [`README`](../README.md).
 This script runs Foldseek structural searches on protein structures (PDB files) and classifies them into CRISPR-associated protein types (e.g., Cas9, Cas12) based on domain-level structural matches.
 
 ```
@@ -115,6 +116,7 @@ python run_foldseek_classification.py \
 
 
 ### mmseq
+Before using this file, check setup in main [`README`](../README.md).
 This script evaluates generated protein sequences against a training dataset using:
 
  - Sequence similarity (MMseqs2)
@@ -192,7 +194,7 @@ evaluate → compare generated sequences → compute metrics → visualize
 | `--truncate_length` | `400`   | Max sequence length               |
 | `--mask_batch_size` | `128`   | Masked tokens per batch           |
 
-[!TIP]
+> [!TIP]
 > For large sequences, perplexity calculation can take a very long time and requires significant memory. A rough estimate of perplexity can be obtained by using only a portion (e.g., 1/4) of the full sequence.
 >
 > This can be controlled with --truncate_length, which reduces resource usage.
@@ -200,7 +202,7 @@ evaluate → compare generated sequences → compute metrics → visualize
 > When working with many sequences, limiting the number used for the calculation can further speed up processing. This can be controlled with --max_ppl_seqs.
 
 **Outputs**
-Most important files are `trainDB` and `summary.csv`. The sumary file contains a summary of the models peformance. Running several training runs appends data to the summary file. Before using this file, check setup in main [`README`](../README.md).
+Most important files are `trainDB` and `summary.csv`. The sumary file contains a summary of the models peformance. Running several training runs appends data to the summary file. 
 
 ```
 train_reference/
