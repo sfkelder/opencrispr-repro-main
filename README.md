@@ -82,6 +82,43 @@ git clone https://github.com/sara-nl/ESMFold_Snellius
 > This approach ensures that version conflicts are avoided and that both the pipeline 
 > and ESMFold can run reliably.
 
+### 4. Create foldseek database
+When using the [`foldseek.py`](./scripts/foldseek.py) script, a structural database must be provided. In this implementation, the [SCOPe database (version 2.08, PDB-style format)](https://scop.berkeley.edu/astral/pdbstyle/ver=2.08) is used as the reference dataset. The database is organized and prepared as follows:
+
+```
+# Create directory for files
+mkdir foldseekDB
+cd ./foldseekDB
+
+# Get scope files
+wget https://scop.berkeley.edu/downloads/pdbstyle/pdbstyle-sel-gs-bib-40-2.08.tgz --no-check-certificate
+
+# Unzip files
+tar -xzf pdbstyle-sel-gs-bib-40-2.08.tgz
+
+# Create database and index
+foldseek createdb pdbstyle-2.08 scope40_db
+foldseek createindex scope40_db tmpIndex
+```
+
+> [!NOTE]
+> Other databases can be used. See [foldseek github page](https://github.com/steineggerlab/foldseek) for more infromation.
+
+### 5. Create mmseq database
+The [`mmseq.py`](./scripts/mmseq.py) script requires a pre-built sequence database to compare incoming samples. In this implementation, the database is constructed from the training dataset.
+
+**Important:** Ensure that **Step 2** has been successfully completed prior to this step.
+
+```
+# Run mmseq script from scripts folder
+python mmseq.py \
+    --mode prepare \
+    --train PATH_TO_TRAIN_DATA \
+    --format csv \
+    --seq_col NAME_OF_PROTEIN_COLUMN \
+    --id_col NAME_OF_ID_COLUMN \
+    --tmp_dir ./tmp
+```
 
 ## Configuration files
 The Protein- and crRNA generation models require configuration files to run. Aditionaly protein prediction requires another seperate configuration file.

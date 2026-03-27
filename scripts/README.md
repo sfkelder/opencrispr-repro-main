@@ -12,7 +12,7 @@ Removes all remaining "1" and "2" characters
 Drops sequences that become empty after cleaning
 
 ```
-python clean_sequences.py --input_path PATH_TO_INPUT \
+python clean_generations.py --input_path PATH_TO_INPUT \
                           --output_folder PATH_TO_OUTPUT \
                           [--seq_col COLUMN_NAME]
 ```
@@ -70,7 +70,7 @@ Before using this file, check setup in main [`README`](../README.md).
 This script runs Foldseek structural searches on protein structures (PDB files) and classifies them into CRISPR-associated protein types (e.g., Cas9, Cas12) based on domain-level structural matches.
 
 ```
-python run_foldseek_classification.py \
+python foldseek.py \
   --query_dir PATH_TO_PDBS \
   --db PATH_TO_FOLDSEEK_DB \
   --tmp_dir PATH_TO_TMP \
@@ -114,6 +114,8 @@ python run_foldseek_classification.py \
 | Only RuvC present           | `RuvC_nuclease`   |
 | None detected               | `unknown`         |
 
+> [!IMPORTANT]
+> Domains are matched by domainIDs defined inside `foldseek.py`. These are currently only for Cas12a and Cas9. Check this [Google Colab](https://colab.research.google.com/drive/1D4BHCwhdIhPdvVwIVba0SXwDCSYBQI81?usp=sharing) for ID conversion.
 
 ### mmseq
 Before using this file, check setup in main [`README`](../README.md).
@@ -133,7 +135,7 @@ evaluate → compare generated sequences → compute metrics → visualize
 
 1. Prepare reference embeddings
     ```
-    python evaluate_sequences.py \
+    python mmseq.py \
         --mode prepare \
         --train PATH_TO_TRAIN_DATA \
         --format fasta \
@@ -142,7 +144,7 @@ evaluate → compare generated sequences → compute metrics → visualize
 
 2. Evaluate generated sequences
     ```
-    python evaluate_sequences.py \
+    python mmseq.py \
         --mode evaluate \
         --gen_dir PATH_TO_GENERATED \
         --reference_dir ./train_reference \
@@ -160,16 +162,16 @@ evaluate → compare generated sequences → compute metrics → visualize
 
 
 **Prepare mode**
-| Argument  | Description                     |
-| --------- | ------------------------------- |
-| `--train` | Training dataset (FASTA or CSV) |
+| Argument  | Description                             |
+| --------- | --------------------------------------- |
+| `--train` | Path to training dataset (FASTA or CSV) |
 
 
 **Evaluation mode**
 | Argument          | Description                                      |
 | ----------------- | ------------------------------------------------ |
 | `--gen_dir`       | Directory or file containing generated sequences |
-| `--reference_dir` | Directory with prepared reference data           |
+| `--reference_dir` | Directory with prepared reference data (Database)|
 | `--results_dir`   | Output directory for evaluation results          |
 
 **Input formating**
@@ -213,10 +215,10 @@ train_reference/
 
 ```
 results/
-├── summary.csv
-├── <model>_identity.png
-├── <model>_tsne.png
-├── <model>_results.tsv
+├── summary.csv            # Readable summary of calculated metrics
+├── <model>_identity.png.  # Identity plot of embeding predictions vs database
+├── <model>_tsne.png.      # tsne of embeddings predictions vs database
+├── <model>_results.tsv.   # Default output of mmseq2
 ```
 
 **Metrics explanation**
@@ -264,7 +266,7 @@ basepairs files → extract stems → apply structural rules → classify VALID 
 ```
 
 ```
-python validate_repeats.py \
+python rna_validation.py \
   --input_path PATH_TO_BASEPAIRS_FILES \
   --csv_file sequences.csv \
   --id_col id \
