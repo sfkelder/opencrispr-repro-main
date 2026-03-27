@@ -232,6 +232,11 @@ opencrispr-train --config path/to/config.yml [--eval-only]
 | `--config`    | string | —       | **Required.** Path to a JSON or YAML configuration file following the `FinetuneAPI` schema. |
 | `--eval-only` | flag   | `False` | Optional. Run evaluation only without training.                                             |
 
+> [!NOTE]
+> The training script supports Distributed Data Processing (ddp). This can be achieved 
+> by using `torchrun` with flags `--standalone` and `--nproc_per_node=1`. Make sure 
+> `--nproc_per_node=1` always equals the amount of gpus and processes available. In 
+> Batch scripsts `nproc_per_node` = `gres=gpu` = `ntasks`
 
 ### Protein model generation
 ```
@@ -299,6 +304,30 @@ grna-modeling-train --ckpt-path PATH_TO_CHECKPOINT [INPUT_OPTIONS] [SAMPLING_OPT
 | `--ckpt-path` | file path | —       | **Required.** Path to trained model checkpoint.   |
 | `--output`    | directory | `"./"`  | Directory where generated gRNA CSV will be saved. |
 
+### crRNA model score
+```
+python score_grnas.py --input PATH_TO_INPUT_CSV \
+                      --ckpt-path PATH_TO_CHECKPOINT \
+                      [--protein-col COL] \
+                      [--tracr-col COL] \
+                      [--crispr-col COL] \
+                      [--rna-batch-size N] \
+                      [--output PATH]
+```
+
+| Argument           | Type      | Default      | Description                                                   |
+| ------------------ | --------- | ------------ | ------------------------------------------------------------- |
+| `--input`          | file path | —            | **Required.** Input CSV containing protein and RNA sequences. |
+| `--ckpt-path`      | file path | —            | **Required.** Path to trained model checkpoint.               |
+| `--protein-col`    | string    | `"protein"`  | Column containing protein sequences.                          |
+| `--tracr-col`      | string    | `"tracrRNA"` | Column containing tracrRNA sequences.                         |
+| `--crispr-col`     | string    | `"crRNA"`    | Column containing crRNA sequences.                            |
+| `--rna-batch-size` | int       | `16`         | Number of RNA pairs to score per batch (per protein).         |
+| `--output`         | directory | `"./"`       | Directory where the scored CSV will be saved.                 |
+
+> [!WARNING]
+> The columns crispr, protein and tracr must always be provided. If the CRISPR-Cas type
+> does not include a tracr please provide a column name with empty values.
 
 ## Citations
 
