@@ -306,7 +306,7 @@ grna-modeling-train --ckpt-path PATH_TO_CHECKPOINT [INPUT_OPTIONS] [SAMPLING_OPT
 
 ### crRNA model score
 ```
-python score_grnas.py --input PATH_TO_INPUT_CSV \
+grna-modeling-score --input PATH_TO_INPUT_CSV \
                       --ckpt-path PATH_TO_CHECKPOINT \
                       [--protein-col COL] \
                       [--tracr-col COL] \
