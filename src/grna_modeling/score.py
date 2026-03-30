@@ -1,29 +1,32 @@
 import click
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 from grna_modeling.runner import gRNAModelRunner
 from grna_modeling.utility.protein import Protein, NucleicAcidBatch
+from grna_modeling.utility import vocabulary
 
 
 @click.command()
-@click.option("--input", "input_csv", required=True, type=click.Path(exists=True),help="Input CSV containing protein + RNA columns.")
-@click.option("--protein-col", default='protein', type=str,help="Column name for protein sequence.")
-@click.option("--tracr-col", default='tracrRNA', type=str, help="Column name for tracrRNA.")
-@click.option("--crispr-col", default='crRNA', type=str, help="Column name for crRNA.")
-@click.option("--output", default='./', type=click.Path(exists=True),help="Output CSV path.")
-@click.option("--rna-batch-size", default=16, type=int,help="Number of RNA pairs to score per batch (per protein).")
-@click.option("--ckpt-path", 'ckpt_path', required=True, type=click.Path(exists=True), help="Number of RNA pairs to score per batch (per protein).")
-def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, ckpt_path):
+@click.option("--input", "input_csv", required=True, type=click.Path(exists=True),
+              help="Input CSV containing protein + RNA columns.")
+@click.option("--protein-col", default='protein', type=str,
+              help="Column name for protein sequence.")
+@click.option("--tracr-col", default='tracrRNA', type=str,
+              help="Column name for tracrRNA.")
+@click.option("--crispr-col", default='crRNA', type=str,
+              help="Column name for crRNA.")
+@click.option("--output", default='./', type=click.Path(exists=True),
+              help="Output CSV path.")
+@click.option("--rna-batch-size", default=16, type=int,
+              help="Number of RNA pairs to score per batch (per protein).")
+@click.option("--ckpt-path", 'ckpt_path', required=True, type=click.Path(exists=True),
+              help="Path to model checkpoint.")
+def main(input_csv, protein_col, tracr_col, crispr_col,
+         output, rna_batch_size, ckpt_path):
     """
     Score tracrRNA + crRNA pairs against proteins from a CSV file.
-
-    The script:
-    - Groups rows by protein
-    - Embeds each protein once
-    - Batches RNA scoring within each protein
-    - Appends normalized log-likelihood scores to the CSV
     """
 
     # ------------------------
@@ -35,7 +38,6 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
         if col not in df.columns:
             raise click.ClickException(f"Missing column: {col}")
 
-    # internal working columns
     df["__protein__"] = df[protein_col].astype(str)
     df["__tracr__"] = df[tracr_col].fillna("").astype(str)
     df["__crispr__"] = df[crispr_col].fillna("").astype(str)
@@ -46,7 +48,6 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
     click.echo("Loading gRNA model runner...")
     runner = gRNAModelRunner(ckpt_path=ckpt_path)
 
-    # storage for scores
     all_scores: Dict[int, float] = {}
 
     # ------------------------
@@ -58,7 +59,6 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
 
         click.echo(f"Scoring protein group with {len(group)} rows")
 
-        # build Protein object once
         protein = Protein.from_sequence(protein_seq)
 
         indices = group.index.tolist()
@@ -66,7 +66,7 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
         crisprs = group["__crispr__"].tolist()
 
         # ------------------------
-        # Batch RNAs safely
+        # Batch RNAs
         # ------------------------
         for start in range(0, len(indices), rna_batch_size):
             end = start + rna_batch_size
@@ -74,6 +74,17 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
             idx_batch = indices[start:end]
             tracr_batch_seqs = tracrs[start:end]
             crispr_batch_seqs = crisprs[start:end]
+
+            # 🔧 FIX: handle empty sequences like training (add sentinels)
+            tracr_batch_seqs = [
+                s if s != "" else vocabulary.TRACR_START_SENT + vocabulary.TRACR_END_SENT
+                for s in tracr_batch_seqs
+            ]
+
+            crispr_batch_seqs = [
+                s if s != "" else vocabulary.CRISPR_START_SENT + vocabulary.CRISPR_END_SENT
+                for s in crispr_batch_seqs
+            ]
 
             tracr_batch = NucleicAcidBatch.from_sequences(tracr_batch_seqs)
             crispr_batch = NucleicAcidBatch.from_sequences(crispr_batch_seqs)
@@ -90,16 +101,17 @@ def main(input_csv, protein_col, tracr_col, crispr_col, output, rna_batch_size, 
     # ------------------------
     # Attach scores
     # ------------------------
-    df["score"] = pd.Series(all_scores).sort_index()
+    df["score"] = df.index.map(all_scores)
 
-    # remove internal columns
     df.drop(columns=["__protein__", "__tracr__", "__crispr__"], inplace=True)
 
     # ------------------------
     # Save output
     # ------------------------
-    df.to_csv(f"{output}/grna_predictions.csv", index=False)
-    click.echo(f"Saved scored CSV to {output}/grna_predictions.csv")
+    output_path = Path(output) / "grna_predictions.csv"
+    df.to_csv(output_path, index=False)
+
+    click.echo(f"Saved scored CSV to {output_path}")
 
 
 if __name__ == "__main__":
